@@ -1,7 +1,7 @@
 node {
    def mvnHome
    stage('Preparation') { 
-			git branch: 'master', credentialsId: '1a70b761-a34e-4cf2-962b-7a394137ec16', url: 'https://github.com/Clayn/yagol.git'
+			git branch: 'development', credentialsId: '1a70b761-a34e-4cf2-962b-7a394137ec16', url: 'https://github.com/Clayn/yagol.git'
             mvnHome = tool 'Maven'
             dir('YAGOL') {
                 if (isUnix()) {
