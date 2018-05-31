@@ -43,12 +43,5 @@ node {
             archive 'target/*.tar.gz'
             jacoco()
         }
-        stage('Deployment') {
-            if (isUnix()) {
-                sh "'${mvnHome}/bin/mvn' -DskipTests deploy"
-            } else {
-                bat(/"${mvnHome}\bin\mvn" -DskipTests deploy/)
-            }
-        }
    }
 }
