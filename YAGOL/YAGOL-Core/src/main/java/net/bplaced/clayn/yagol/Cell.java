@@ -24,7 +24,7 @@ public class Cell
         return alive;
     }
 
-    public Void calc()
+    public void calc()
     {
         int calcAlive = getAliveNeighbours();
         if (!isAlive())
@@ -34,7 +34,6 @@ public class Cell
         {
             nextAlive = calcAlive >= 2 && calcAlive <= 3;
         }
-        return null;
     }
 
     private int getAliveNeighbours()
@@ -56,10 +55,9 @@ public class Cell
         this.alive = alive;
     }
 
-    public Void tick()
+    public void tick()
     {
         alive = nextAlive;
-        return null;
     }
 
     public void setNeighbour(HDirection hDir, VDirection vDir, Cell c)
@@ -70,8 +68,6 @@ public class Cell
 
         if (c == this || (hDir == HDirection.NONE && vDir == VDirection.NONE))
         {
-            LOG.debug("Adding {} to {} with H: {} and V: {}", c, this, hDir,
-                    vDir);
             throw new IllegalArgumentException();
         }
         int x = -5;
