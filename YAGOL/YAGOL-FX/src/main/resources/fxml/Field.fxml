@@ -4,24 +4,23 @@
 <?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
 
-<BorderPane fx:id="pane" prefHeight="800.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bplaced.clayn.yagol.fx.FieldController">
-   <center>
-      <GridPane fx:id="grid" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" BorderPane.alignment="CENTER">
-      </GridPane>
-   </center>
+<BorderPane fx:id="root" prefHeight="800.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.bplaced.clayn.yagol.fx.FieldController">
    <bottom>
       <HBox alignment="CENTER" BorderPane.alignment="CENTER">
          <children>
             <Slider fx:id="sizeSlider" blockIncrement="1.0" min="1.0" showTickLabels="true" showTickMarks="true" value="10.0" HBox.hgrow="ALWAYS" />
             <Button mnemonicParsing="false" onAction="#onNext" text="Next" />
-            <Slider fx:id="timeSlider" blockIncrement="5.0" max="1000.0" min="100.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="100.0" HBox.hgrow="ALWAYS" />
+            <Slider fx:id="timeSlider" blockIncrement="5.0" max="1000.0" min="10.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="100.0" HBox.hgrow="ALWAYS" />
          </children>
       </HBox>
    </bottom>
    <top>
       <ToggleButton fx:id="autoButton" mnemonicParsing="false" text="Auto" BorderPane.alignment="CENTER" />
    </top>
+   <center>
+      <Pane fx:id="pane" BorderPane.alignment="CENTER" />
+   </center>
 </BorderPane>

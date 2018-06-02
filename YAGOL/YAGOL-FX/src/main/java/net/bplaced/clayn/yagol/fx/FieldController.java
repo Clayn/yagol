@@ -2,56 +2,63 @@ package net.bplaced.clayn.yagol.fx;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
 import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.RowConstraints;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import net.bplaced.clayn.yagol.Field;
 
 public class FieldController implements Initializable
 {
 
-    private final DoubleProperty waitTime=new SimpleDoubleProperty();
-    private final DoubleProperty size=new SimpleDoubleProperty();
+    private final DoubleProperty waitTime = new SimpleDoubleProperty();
+    private final DoubleProperty size = new SimpleDoubleProperty();
     @FXML
-    private BorderPane pane;
+    private BorderPane root;
     @FXML
-    private GridPane grid;
+    private Pane pane;
     @FXML
     private ToggleButton autoButton;
-    
+
     @FXML
     private Slider timeSlider;
-    
+
     @FXML
     private Slider sizeSlider;
 
-    private Button buttons[][];
+    private Rectangle[][] rectangle;
 
     private final BooleanProperty auto = new SimpleBooleanProperty(false);
 
     private final ObjectProperty<Field> currentField = new SimpleObjectProperty<>();
+    private final IntegerProperty generation = new SimpleIntegerProperty(0);
+    private final Timer timer = new Timer("YAGOL-Timer");
 
     @Override
     public void initialize(URL url, ResourceBundle rb)
@@ -73,13 +80,13 @@ public class FieldController implements Initializable
                 updateGrid();
             }
         });
-        
-        currentField.set(new Field(40));
+
+        currentField.set(new Field(90));
     }
 
-    
-    public void addCloseListener() {
-        grid.getScene().getWindow().setOnCloseRequest(
+    public void addCloseListener()
+    {
+        pane.getScene().getWindow().setOnCloseRequest(
                 new EventHandler<WindowEvent>()
         {
             @Override
@@ -91,9 +98,14 @@ public class FieldController implements Initializable
                     return;
                 }
                 field.stop();
+                timer.cancel();
             }
         });
+        ((Stage) pane.getScene().getWindow()).titleProperty().bind(
+                Bindings.createStringBinding(() -> String.format(
+                "Generation: %d", generation.get()), generation));
     }
+
     private void updateValues()
     {
         Field field = currentField.get();
@@ -106,52 +118,31 @@ public class FieldController implements Initializable
             for (int y = 0; y < field.getSize(); y++)
             {
                 boolean alive = field.isAlive(x, y);
-                Button b = buttons[x][y];
-                b.setTextFill(alive ? Color.RED : Color.GREEN);
-                b.setStyle("-fx-background-color:" + (alive ? "green" : "red"));
+                Rectangle r = rectangle[x][y];
+                r.setFill(alive ? Color.GREEN : Color.RED);
             }
         }
         if (auto.get())
         {
-            new Thread(new Runnable()
+            timer.schedule(new TimerTask()
             {
                 @Override
                 public void run()
                 {
-                    try
+                    Platform.runLater(() ->
                     {
-                        Thread.sleep(waitTime.longValue());
-                        Platform.runLater(new Runnable()
+                        try
                         {
-                            @Override
-                            public void run()
-                            {
-                                try
-                                {
-                                    onNext();
-                                } catch (InterruptedException ex)
-                                {
-                                    Logger.getLogger(
-                                            FieldController.class.getName()).log(
-                                            Level.SEVERE,
-                                            null, ex);
-                                } catch (ExecutionException ex)
-                                {
-                                    Logger.getLogger(
-                                            FieldController.class.getName()).log(
-                                            Level.SEVERE,
-                                            null, ex);
-                                }
-                            }
-                        });
-                    } catch (Exception ex)
-                    {
-                        Logger.getLogger(FieldController.class.getName()).log(
-                                Level.SEVERE,
-                                null, ex);
-                    }
+                            onNext();
+                        } catch (InterruptedException | ExecutionException ex)
+                        {
+                            Logger.getLogger(FieldController.class.getName()).log(
+                                    Level.SEVERE,
+                                    null, ex);
+                        }
+                    });
                 }
-            }).start();
+            }, waitTime.longValue());
         }
     }
 
@@ -164,51 +155,53 @@ public class FieldController implements Initializable
             return;
         }
         field.tick(() -> Platform.runLater(this::updateValues));
+        generation.set(generation.get() + 1);
     }
 
     private void updateGrid()
     {
-        grid.getChildren().clear();
-        grid.getRowConstraints().clear();
-        grid.getColumnConstraints().clear();
+        pane.getChildren().clear();
         if (currentField.get() == null)
         {
             return;
         }
         Field field = currentField.get();
-        buttons = new Button[field.getSize()][field.getSize()];
+        rectangle = new Rectangle[field.getSize()][field.getSize()];
         for (int x = 0; x < field.getSize(); x++)
         {
-            ColumnConstraints column = new ColumnConstraints();
-            RowConstraints row = new RowConstraints();
-            column.maxWidthProperty().bind(size);
-            column.minWidthProperty().bind(size);
-            row.maxHeightProperty().bind(size);
-            row.minHeightProperty().bind(size);
-            grid.getRowConstraints().add(row);
-            grid.getColumnConstraints().add(column);
             for (int y = 0; y < field.getSize(); y++)
             {
                 boolean alive = field.isAlive(x, y);
-                Button b = new Button();
-                b.setTextFill(alive ? Color.RED : Color.GREEN);
-                b.setStyle("-fx-background-color:" + (alive ? "green" : "red"));
-                grid.add(b, x, y);
-                b.maxWidthProperty().bind(size);
-                b.minWidthProperty().bind(size);
-                buttons[x][y] = b;
-                int bX = x;
-                int bY = y;
-                b.setOnAction(new EventHandler<ActionEvent>()
+                Rectangle rect = new Rectangle();
+                DoubleBinding width = pane.widthProperty().divide(
+                        field.getSize());
+                DoubleBinding height = pane.heightProperty().divide(
+                        field.getSize());
+                rect.widthProperty().bind(width);
+                rect.heightProperty().bind(height);
+                rect.xProperty().bind(rect.widthProperty().multiply(x));
+                rect.yProperty().bind(rect.heightProperty().multiply(y));
+                rect.setFill(alive ? Color.GREEN : Color.RED);
+                int rx = x;
+                int ry = y;
+                rect.setOnMousePressed(new EventHandler<MouseEvent>()
                 {
                     @Override
-                    public void handle(ActionEvent event)
+                    public void handle(MouseEvent event)
                     {
-                        boolean alive = field.isAlive(bX, bY);
-                        field.setCell(bX, bY, !alive);
-                        Platform.runLater(FieldController.this::updateValues);
+                        Field f = currentField.get();
+                        if (f == null)
+                        {
+                            return;
+                        }
+                        f.setCell(rx, ry, !f.isAlive(rx, ry));
+                        boolean localAlive = f.isAlive(rx, ry);
+                        rect.setFill(localAlive ? Color.GREEN : Color.RED);
                     }
                 });
+                rectangle[x][y] = rect;
+                pane.getChildren().add(rect);
+
             }
         }
     }
