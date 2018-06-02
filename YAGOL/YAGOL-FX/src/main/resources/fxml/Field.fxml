@@ -11,7 +11,6 @@
    <bottom>
       <HBox alignment="CENTER" BorderPane.alignment="CENTER">
          <children>
-            <Slider fx:id="sizeSlider" blockIncrement="1.0" min="1.0" showTickLabels="true" showTickMarks="true" value="10.0" HBox.hgrow="ALWAYS" />
             <Button mnemonicParsing="false" onAction="#onNext" text="Next" />
             <Slider fx:id="timeSlider" blockIncrement="5.0" max="1000.0" min="10.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="100.0" HBox.hgrow="ALWAYS" />
          </children>

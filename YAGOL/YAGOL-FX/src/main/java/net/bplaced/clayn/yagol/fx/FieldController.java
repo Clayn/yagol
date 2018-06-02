@@ -25,7 +25,11 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -38,7 +42,6 @@ public class FieldController implements Initializable
 {
 
     private final DoubleProperty waitTime = new SimpleDoubleProperty();
-    private final DoubleProperty size = new SimpleDoubleProperty();
     @FXML
     private BorderPane root;
     @FXML
@@ -49,8 +52,6 @@ public class FieldController implements Initializable
     @FXML
     private Slider timeSlider;
 
-    @FXML
-    private Slider sizeSlider;
 
     private Rectangle[][] rectangle;
 
@@ -64,7 +65,6 @@ public class FieldController implements Initializable
     public void initialize(URL url, ResourceBundle rb)
     {
         auto.bind(autoButton.selectedProperty());
-        size.bind(sizeSlider.valueProperty());
         waitTime.bind(timeSlider.valueProperty());
         currentField.addListener(new ChangeListener<Field>()
         {
@@ -81,7 +81,7 @@ public class FieldController implements Initializable
             }
         });
 
-        currentField.set(new Field(90));
+        currentField.set(new Field(120));
     }
 
     public void addCloseListener()
@@ -197,6 +197,43 @@ public class FieldController implements Initializable
                         f.setCell(rx, ry, !f.isAlive(rx, ry));
                         boolean localAlive = f.isAlive(rx, ry);
                         rect.setFill(localAlive ? Color.GREEN : Color.RED);
+                    }
+                });
+                rect.setOnDragDetected(new EventHandler<MouseEvent>()
+                {
+                    @Override
+                    public void handle(MouseEvent event)
+                    {
+                        Dragboard db = rect.startDragAndDrop(TransferMode.ANY);
+
+                        /* Put a string on a dragboard */
+                        ClipboardContent content = new ClipboardContent();
+                        content.putString("DRAG");
+                        db.setContent(content);
+
+                        event.consume();
+                    }
+                });
+                rect.setOnDragEntered(new EventHandler<DragEvent>()
+                {
+                    @Override
+                    public void handle(DragEvent event)
+                    {
+                        if (event.getGestureSource() != rect
+                                && event.getDragboard().hasString())
+                        {
+                            Field f = currentField.get();
+                            if (f == null)
+                            {
+                                return;
+                            }
+                            f.setCell(rx, ry, !f.isAlive(rx, ry));
+                            boolean localAlive = f.isAlive(rx, ry);
+                            rect.setFill(localAlive ? Color.GREEN : Color.RED);
+                            event.acceptTransferModes(TransferMode.ANY);
+                        }
+
+                        event.consume();
                     }
                 });
                 rectangle[x][y] = rect;
