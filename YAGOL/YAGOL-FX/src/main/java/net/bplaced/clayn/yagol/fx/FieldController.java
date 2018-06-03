@@ -1,6 +1,7 @@
 package net.bplaced.clayn.yagol.fx;
 
 import java.net.URL;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -23,8 +24,10 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
+import javafx.scene.control.ColorPicker;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.Slider;
-import javafx.scene.control.ToggleButton;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
@@ -37,21 +40,36 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import net.bplaced.clayn.yagol.Field;
+import org.controlsfx.glyphfont.FontAwesome;
+import org.controlsfx.glyphfont.Glyph;
 
 public class FieldController implements Initializable
 {
 
+    private static final FontAwesome FONT = new FontAwesome();
+    private static final Glyph PLAY = FONT.create(FontAwesome.Glyph.PLAY);
+    private static final Glyph PAUSE = FONT.create(FontAwesome.Glyph.PAUSE);
     private final DoubleProperty waitTime = new SimpleDoubleProperty();
     @FXML
     private BorderPane root;
     @FXML
     private Pane pane;
-    @FXML
-    private ToggleButton autoButton;
 
+    @FXML
+    private ColorPicker deadPicker;
+    @FXML
+    private ColorPicker alivePicker;
+
+    @FXML
+    private ProgressBar aliveBar;
+
+    @FXML
+    private ProgressBar deadBar;
+
+    @FXML
+    private Button playButton;
     @FXML
     private Slider timeSlider;
-
 
     private Rectangle[][] rectangle;
 
@@ -59,13 +77,18 @@ public class FieldController implements Initializable
 
     private final ObjectProperty<Field> currentField = new SimpleObjectProperty<>();
     private final IntegerProperty generation = new SimpleIntegerProperty(0);
+    private final ObjectProperty<Color> aliveColor = new SimpleObjectProperty<>(
+            Color.GREEN);
+    private final ObjectProperty<Color> deadColor = new SimpleObjectProperty<>(
+            Color.RED);
     private final Timer timer = new Timer("YAGOL-Timer");
+    private final IntegerProperty cellCount = new SimpleIntegerProperty(0);
+    private final IntegerProperty aliveCount = new SimpleIntegerProperty(0);
+    private final DoubleProperty deadCount = new SimpleDoubleProperty(0);
 
     @Override
     public void initialize(URL url, ResourceBundle rb)
     {
-        auto.bind(autoButton.selectedProperty());
-        waitTime.bind(timeSlider.valueProperty());
         currentField.addListener(new ChangeListener<Field>()
         {
             @Override
@@ -80,8 +103,71 @@ public class FieldController implements Initializable
                 updateGrid();
             }
         });
+        waitTime.bind(timeSlider.valueProperty());
+        playButton.graphicProperty().bind(Bindings.createObjectBinding(
+                () -> auto.get() ? PAUSE : PLAY,
+                auto));
+        cellCount.bind(Bindings.createIntegerBinding(() -> Optional.ofNullable(
+                currentField.get()).map(Field::getSize).map((i) -> i * i).orElse(
+                -1), currentField));
+        aliveCount.bind(Bindings.createIntegerBinding(() -> Optional.ofNullable(
+                currentField.get()).map(Field::getAliveCells).orElse(
+                -1), currentField, generation));
+        deadCount.bind(Bindings.createIntegerBinding(() -> Optional.ofNullable(
+                currentField.get()).map(Field::getDeadCells).orElse(
+                -1), currentField, generation));
+        currentField.set(new Field(60));
+        alivePicker.valueProperty().bindBidirectional(aliveColor);
+        deadPicker.valueProperty().bindBidirectional(deadColor);
+        aliveBar.progressProperty().bind(new SimpleDoubleProperty(1).subtract(
+                deadBar.progressProperty()));
+        deadBar.progressProperty().bind(deadCount.divide(cellCount));
+        aliveBar.styleProperty().bind(Bindings.createStringBinding(
+                () -> String.format("-fx-accent: %s;",
+                        "#" + Integer.toHexString(aliveColor.get().hashCode())),
+                aliveColor));
+        deadBar.styleProperty().bind(Bindings.createStringBinding(
+                () -> String.format("-fx-accent: %s;",
+                        "#" + Integer.toHexString(deadColor.get().hashCode())),
+                deadColor));
+        alivePicker.valueProperty().addListener(new ChangeListener<Color>()
+        {
+            @Override
+            public void changed(
+                    ObservableValue<? extends Color> observable, Color oldValue,
+                    Color newValue)
+            {
+                if (newValue != null)
+                {
+                    updateValues();
+                }
+            }
+        });
+        deadPicker.valueProperty().addListener(new ChangeListener<Color>()
+        {
+            @Override
+            public void changed(
+                    ObservableValue<? extends Color> observable, Color oldValue,
+                    Color newValue)
+            {
+                if (newValue != null)
+                {
+                    updateValues();
+                }
+            }
+        });
+    }
 
-        currentField.set(new Field(120));
+    @FXML
+    private void onPlay() throws InterruptedException, ExecutionException
+    {
+        if (auto.get())
+        {
+            auto.set(false);
+            return;
+        }
+        auto.set(true);
+        onNext();
     }
 
     public void addCloseListener()
@@ -119,7 +205,8 @@ public class FieldController implements Initializable
             {
                 boolean alive = field.isAlive(x, y);
                 Rectangle r = rectangle[x][y];
-                r.setFill(alive ? Color.GREEN : Color.RED);
+                r.setFill(alive ? aliveColor.get() : deadColor.get());
+                r.setStroke(!alive ? aliveColor.get() : deadColor.get());
             }
         }
         if (auto.get())
@@ -147,6 +234,12 @@ public class FieldController implements Initializable
     }
 
     @FXML
+    private void onStop()
+    {
+        auto.set(false);
+        currentField.set(new Field(currentField.get().getSize()));
+    }
+
     private void onNext() throws InterruptedException, ExecutionException
     {
         Field field = currentField.get();
@@ -156,6 +249,8 @@ public class FieldController implements Initializable
         }
         field.tick(() -> Platform.runLater(this::updateValues));
         generation.set(generation.get() + 1);
+        System.out.println(
+                "Percent Alive: " + aliveBar.getProgress());
     }
 
     private void updateGrid()
@@ -181,7 +276,9 @@ public class FieldController implements Initializable
                 rect.heightProperty().bind(height);
                 rect.xProperty().bind(rect.widthProperty().multiply(x));
                 rect.yProperty().bind(rect.heightProperty().multiply(y));
-                rect.setFill(alive ? Color.GREEN : Color.RED);
+                rect.setFill(alive ? aliveColor.get() : deadColor.get());
+                rect.setStrokeWidth(1);
+                rect.setStroke(!alive ? aliveColor.get() : deadColor.get());
                 int rx = x;
                 int ry = y;
                 rect.setOnMousePressed(new EventHandler<MouseEvent>()
@@ -196,7 +293,10 @@ public class FieldController implements Initializable
                         }
                         f.setCell(rx, ry, !f.isAlive(rx, ry));
                         boolean localAlive = f.isAlive(rx, ry);
-                        rect.setFill(localAlive ? Color.GREEN : Color.RED);
+                        rect.setFill(
+                                localAlive ? aliveColor.get() : deadColor.get());
+                        rect.setStroke(
+                                !localAlive ? aliveColor.get() : deadColor.get());
                     }
                 });
                 rect.setOnDragDetected(new EventHandler<MouseEvent>()
@@ -229,7 +329,10 @@ public class FieldController implements Initializable
                             }
                             f.setCell(rx, ry, !f.isAlive(rx, ry));
                             boolean localAlive = f.isAlive(rx, ry);
-                            rect.setFill(localAlive ? Color.GREEN : Color.RED);
+                            rect.setFill(
+                                    localAlive ? aliveColor.get() : deadColor.get());
+                            rect.setStroke(
+                                    !localAlive ? aliveColor.get() : deadColor.get());
                             event.acceptTransferModes(TransferMode.ANY);
                         }
 
