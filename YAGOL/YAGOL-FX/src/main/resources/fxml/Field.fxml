@@ -29,12 +29,12 @@
             <children>
                 <HBox spacing="10.0" BorderPane.alignment="CENTER">
                     <children>
-                        <Button mnemonicParsing="false" text="">
+                        <Button mnemonicParsing="false" text="" onAction="#onLoad" >
                             <graphic>
                                 <Glyph fontFamily="FontAwesome" icon="FOLDER_OPEN" />
                             </graphic>
                         </Button>
-                        <Button mnemonicParsing="false" text="">
+                        <Button mnemonicParsing="false" text="" onAction="#onSave">
                             <graphic>
                                 <Glyph fontFamily="FontAwesome" icon="SAVE" />
                             </graphic>

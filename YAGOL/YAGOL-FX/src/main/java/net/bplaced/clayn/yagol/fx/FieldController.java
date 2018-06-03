@@ -1,5 +1,8 @@
 package net.bplaced.clayn.yagol.fx;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -37,9 +40,12 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import net.bplaced.clayn.yagol.Field;
+import net.bplaced.clayn.yagol.io.FieldInputStream;
+import net.bplaced.clayn.yagol.io.FieldOutputStream;
 import org.controlsfx.glyphfont.FontAwesome;
 import org.controlsfx.glyphfont.Glyph;
 
@@ -86,6 +92,39 @@ public class FieldController implements Initializable
     private final IntegerProperty aliveCount = new SimpleIntegerProperty(0);
     private final DoubleProperty deadCount = new SimpleDoubleProperty(0);
 
+    @FXML
+    private void onSave() throws FileNotFoundException, IOException
+    {
+        FileChooser chooser = new FileChooser();
+        chooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        File load = chooser.showSaveDialog(pane.getScene().getWindow());
+        auto.set(false);
+        if (load == null)
+        {
+            return;
+        }
+        try(FieldOutputStream out=new FieldOutputStream(load)) {
+            out.writeField(currentField.get());
+        }
+    }
+
+    @FXML
+    private void onLoad() throws FileNotFoundException, IOException
+    {
+        FileChooser chooser = new FileChooser();
+        chooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        File load = chooser.showOpenDialog(pane.getScene().getWindow());
+        if (load == null || !load.exists() || load.isDirectory())
+        {
+            return;
+        }
+        auto.set(false);
+        try (FieldInputStream in = new FieldInputStream(load))
+        {
+            currentField.set(in.readField());
+        }
+    }
+
     @Override
     public void initialize(URL url, ResourceBundle rb)
     {
@@ -100,6 +139,7 @@ public class FieldController implements Initializable
                 {
                     oldValue.stop();
                 }
+                generation.set(0);
                 updateGrid();
             }
         });
