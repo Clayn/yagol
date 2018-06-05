@@ -17,8 +17,10 @@ Thats it. We now have a field with the default size of 20. (Note that this will 
 So lets make some of them alive!
 
     field.setCell(x,y,true);
-Now the cell at the position (x,y) is alive. 
+Now the cell at the position (x,y) is alive. Of course we need some more alive cells but you know how to make this happen. 
+
+Finally, when we have 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNzAxNzM1NjY1XX0=
+eyJoaXN0b3J5IjpbMTE5OTA1NTg3MV19
 -->
