@@ -1,7 +1,7 @@
 node {
    def mvnHome
    stage('Preparation') { 
-			//git branch: '${BRANCH_NAME}', credentialsId: '1a70b761-a34e-4cf2-962b-7a394137ec16', url: 'https://github.com/Clayn/yagol.git'
+	    checkout([$class: 'GitSCM', branches: [[name: '*/*']], doGenerateSubmoduleConfigurations: false, extensions: [], gitTool: 'Default', submoduleCfg: [], userRemoteConfigs: [[credentialsId: '1a70b761-a34e-4cf2-962b-7a394137ec16', url: 'https://github.com/Clayn/yagol/']]])
             mvnHome = tool 'Maven'
             dir('YAGOL') {
                 if (isUnix()) {
