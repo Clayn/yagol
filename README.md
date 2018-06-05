@@ -23,7 +23,11 @@ Finally, when we have created our field and made some cells live we want to let 
 
     field.tick();
 
-Now one generation passe
+Now one generation passed. 
+
+    field.isAlive(x,y);
+Use this to see if a cell is alive or not. To count the alive and dead cells use `enter code here`
+
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTkzMjkwNDAyMF19
+eyJoaXN0b3J5IjpbLTQyNTc3MTYyNl19
 -->
