@@ -19,8 +19,11 @@ So lets make some of them alive!
     field.setCell(x,y,true);
 Now the cell at the position (x,y) is alive. Of course we need some more alive cells but you know how to make this happen. 
 
-Finally, when we have 
+Finally, when we have created our field and made some cells live we want to let them do their daily work.
 
+    field.tick();
+
+Now one generation passe
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTE5OTA1NTg3MV19
+eyJoaXN0b3J5IjpbMTkzMjkwNDAyMF19
 -->
