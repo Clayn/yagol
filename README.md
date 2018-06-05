@@ -13,8 +13,12 @@ Yagol is really easy to use. So lets see what we need to create a new Game of Li
 and use it:
 
     Field field=new Field();
-Thats it. We now have a field with the default size of 20. (Note that this will produce some warnings/exceptions. These are expected and will be "fixed" in further versions). But wait? What about the cells? Are the
-Now how can we define which Cell is alive?
+Thats it. We now have a field with the default size of 20. (Note that this will produce some warnings/exceptions. These are expected and will be "fixed" in further versions). But wait? What about the cells? Are they dead? Sadly, yes.
+So lets make some of them alive!
+
+    field.setCell(x,y,true);
+Now the cell at the position (x,y) is alive. 
+
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTM2NTMxNjQ4Ml19
+eyJoaXN0b3J5IjpbNzAxNzM1NjY1XX0=
 -->
