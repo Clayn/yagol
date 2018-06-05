@@ -2,13 +2,17 @@ package net.bplaced.clayn.yagol;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import net.bplaced.clayn.yagol.util.CellConsumer;
 import net.bplaced.clayn.yagol.util.HDirection;
 import net.bplaced.clayn.yagol.util.VDirection;
@@ -27,6 +31,11 @@ public class Field
     private final int size;
     private final Cell[][] cells;
     private final ExecutorService service;
+    private final Map<Integer, boolean[][]> generationCache = new HashMap<>();
+    private int generation = 0;
+    private final AtomicInteger aliveCounters[] = new AtomicInteger[4];
+
+    public boolean caching = false;
 
     public Field(int size)
     {
@@ -39,6 +48,10 @@ public class Field
         cells = new Cell[size][size];
         initField();
         service = Executors.newFixedThreadPool(4);
+        for (int i = 0; i < aliveCounters.length; ++i)
+        {
+            aliveCounters[i] = new AtomicInteger(0);
+        }
     }
 
     public Field()
@@ -90,6 +103,21 @@ public class Field
         }
     }
 
+    public int getGeneration()
+    {
+        return generation;
+    }
+
+    public void setCaching(boolean caching)
+    {
+        this.caching = caching;
+    }
+
+    public boolean isCaching()
+    {
+        return caching;
+    }
+
     public int getSize()
     {
         return size;
@@ -133,8 +161,14 @@ public class Field
         int yHalf = xHalf;
         List<Callable<Void>> calculators = new ArrayList<>();
         List<Callable<Void>> tickers = new ArrayList<>();
+        boolean currentGen[][] = caching
+                ? new boolean[size][size] : null;
+        for (int i = 0; i < aliveCounters.length; ++i)
+        {
+            aliveCounters[i].set(0);
+        }
         createCalculators(calculators, xHalf, yHalf);
-        createTickers(tickers, xHalf, yHalf);
+        createTickers(tickers, xHalf, yHalf, currentGen);
         for (Future<Void> task : service.invokeAll(calculators))
         {
             task.get();
@@ -143,6 +177,11 @@ public class Field
         {
             task.get();
         }
+        if (caching)
+        {
+            generationCache.put(generation, currentGen);
+        }
+        generation++;
         Optional.ofNullable(onFinish).ifPresent(Runnable::run);
     }
 
@@ -156,8 +195,19 @@ public class Field
         return cells[x][y].isAlive();
     }
 
+    public int getAliveCells()
+    {
+        return Arrays.stream(aliveCounters).mapToInt(AtomicInteger::get)
+                .sum();
+    }
+
+    public int getDeadCells()
+    {
+        return size * size - getAliveCells();
+    }
+
     private void createTickers(List<Callable<Void>> tickers, int xHalf,
-            int yHalf)
+            int yHalf, boolean[][] currentGen)
     {
         tickers.add(new Callable<Void>()
         {
@@ -169,6 +219,14 @@ public class Field
                     for (int y = 0; y < yHalf; y++)
                     {
                         cells[x][y].tick();
+                        if (cells[x][y].isAlive())
+                        {
+                            aliveCounters[0].incrementAndGet();
+                        }
+                        if (currentGen != null)
+                        {
+                            currentGen[x][y] = cells[x][y].isAlive();
+                        }
                     }
                 }
                 return null;
@@ -184,6 +242,14 @@ public class Field
                     for (int y = 0; y < yHalf; y++)
                     {
                         cells[x][y].tick();
+                        if (cells[x][y].isAlive())
+                        {
+                            aliveCounters[1].incrementAndGet();
+                        }
+                        if (currentGen != null)
+                        {
+                            currentGen[x][y] = cells[x][y].isAlive();
+                        }
                     }
                 }
                 return null;
@@ -199,6 +265,14 @@ public class Field
                     for (int y = yHalf; y < size; y++)
                     {
                         cells[x][y].tick();
+                        if (cells[x][y].isAlive())
+                        {
+                            aliveCounters[2].incrementAndGet();
+                        }
+                        if (currentGen != null)
+                        {
+                            currentGen[x][y] = cells[x][y].isAlive();
+                        }
                     }
                 }
                 return null;
@@ -214,6 +288,14 @@ public class Field
                     for (int y = yHalf; y < size; y++)
                     {
                         cells[x][y].tick();
+                        if (cells[x][y].isAlive())
+                        {
+                            aliveCounters[3].incrementAndGet();
+                        }
+                        if (currentGen != null)
+                        {
+                            currentGen[x][y] = cells[x][y].isAlive();
+                        }
                     }
                 }
                 return null;
@@ -234,6 +316,7 @@ public class Field
                     for (int y = 0; y < yHalf; y++)
                     {
                         cells[x][y].calc();
+
                     }
                 }
                 return null;
