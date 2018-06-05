@@ -13,7 +13,7 @@ Yagol is really easy to use. So lets see what we need to create a new Game of Li
 and use it:
 
     Field field=new Field();
-
+Thats it. We now have a ie
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3NjUxMzY1ODFdfQ==
+eyJoaXN0b3J5IjpbLTU2MzY1MzU0OV19
 -->
