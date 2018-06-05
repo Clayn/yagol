@@ -26,8 +26,11 @@ Finally, when we have created our field and made some cells live we want to let 
 Now one generation passed. 
 
     field.isAlive(x,y);
-Use this to see if a cell is alive or not. To count the alive and dead cells use `enter code here`
+Use this to see if a cell is alive or not. To count the alive and dead cells use `field.getDeadCells();`
+`field.getAliveCells();`
+
+Thats it. Now you know the basic usage of Yagol and are ready to explore the world of [Conway's Game Of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life)!
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTQyNTc3MTYyNl19
+eyJoaXN0b3J5IjpbLTE5NTg0NjkzNzFdfQ==
 -->
