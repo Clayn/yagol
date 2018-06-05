@@ -4,8 +4,10 @@ The project is separated into two Maven Modules:
 
  - Yagol-Core
  - Yagol-FX
-The 
+ 
+The core project is used to provide the functionality and basic classes so that you could create your own UI or use it for other purposes. 
+The FX project is a sampel UI to display the Game of Life using JavaFX
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTg2MDQzMDBdfQ==
+eyJoaXN0b3J5IjpbMTcxNzMxMzYzMV19
 -->
